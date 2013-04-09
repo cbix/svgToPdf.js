@@ -1,11 +1,9 @@
 # What?
-Hey, if your imagination can't extract this information out of the project's title, you may not be able to use it... But yes, it's a pure javascript converter for SVG to PDF.
+We took the work done by CBiX and added functionality for svg paths among other small changes.
 
-# Seriously?
-Yes! I started this for making PDF export from [svg-edit](http://code.google.com/p/svg-edit) possible.
 
 # Capabilities
-It can convert text, lines, rectangles, ellipses and groups of these elements.
+It can convert text, lines, rectangles, ellipses and groups of these elements. (AND PATHS!)
 
 # Usage
     // I recommend to keep the svg visible as a preview
@@ -18,6 +16,10 @@ It can convert text, lines, rectangles, ellipses and groups of these elements.
 	});
 	pdf.output('datauri'); // use output() to get the jsPDF buffer
 
+# Special thanks
+* [CBiX](https://github.com/CBiX/svgToPdf.js)
+
 # Requirements:
 * [jsPDF](https://github.com/MrRio/jsPDF)
 * [jQuery](http://jquery.org)
+* [underscore](http://underscorejs.org)
