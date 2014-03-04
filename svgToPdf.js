@@ -31,7 +31,7 @@ var svgElementToPdf = function(element, pdf, options) {
     // pdf is a jsPDF object
     //console.log("options =", options);
     var remove = (typeof(options.removeInvalid) == 'undefined' ? remove = false : options.removeInvalid);
-    var k = (typeof(options.removeInvalid) == 'undefined' ? 1.0 : options.scale);
+    var k = (typeof(options.scale) == 'undefined' ? 1.0 : options.scale);
     var colorMode = null;
     $(element).children().each(function(i, node) {
         //console.log("passing: ", node);
