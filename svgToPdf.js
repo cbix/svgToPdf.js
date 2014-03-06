@@ -30,7 +30,7 @@ var pdfSvgAttr = {
 var svgElementToPdf = function(element, pdf, options) {
     // pdf is a jsPDF object
     //console.log("options =", options);
-    var remove = (typeof(options.removeInvalid) == 'undefined' ? remove = false : options.removeInvalid);
+    var remove = (typeof(options.removeInvalid) == 'undefined' ? false : options.removeInvalid);
     var k = (typeof(options.scale) == 'undefined' ? 1.0 : options.scale);
     var colorMode = null;
     $(element).children().each(function(i, node) {
