@@ -24,6 +24,7 @@ It can convert text, lines, rectangles, ellipses and groups of these elements.
 
 # Roadmap:
 * Image elements
+* multi-page pdf (from svg layers)
 * remove bad practices from code
 * remove jQuery dependency (or use sth lighter)
 * make a demo site with svg-edit
