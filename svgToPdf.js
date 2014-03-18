@@ -205,4 +205,19 @@ var svgElementToPdf = function(element, pdf, options) {
         }
     });
     return pdf;
-}
+};
+
+(function(jsPDFAPI) {
+'use strict';
+    
+  jsPDFAPI.addSVG = function(element, x, y, options) {
+    'use strict'
+
+    options = (typeof(options) == 'undefined' ? {} : options);
+    options.x_offset = x;
+    options.y_offset = y;
+
+    svgElementToPdf(element, this, options);
+    return this;
+  };
+})(jsPDF.API);
