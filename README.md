@@ -21,3 +21,10 @@ It can convert text, lines, rectangles, ellipses and groups of these elements.
 # Requirements:
 * [jsPDF](https://github.com/MrRio/jsPDF)
 * [jQuery](http://jquery.org)
+
+# Roadmap:
+* Image elements
+* remove bad practices from code
+* remove jQuery dependency (or use sth lighter)
+* make a demo site with svg-edit
+* node.js compatibility (for server-side pdf creation)

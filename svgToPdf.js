@@ -1,7 +1,8 @@
 /*
  * svgToPdf.js
  * 
- * Copyright 2012 Florian Hülsmann <fh@cbix.de>
+ * Copyright 2012-2014 Florian Hülsmann <fh@cbix.de>
+ * Copyright 2014 Ben Gribaudo <me@bengribaudo.com>
  * 
  * This script is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -209,15 +210,15 @@ var svgElementToPdf = function(element, pdf, options) {
 
 (function(jsPDFAPI) {
 'use strict';
-    
-  jsPDFAPI.addSVG = function(element, x, y, options) {
-    'use strict'
 
-    options = (typeof(options) == 'undefined' ? {} : options);
-    options.x_offset = x;
-    options.y_offset = y;
+    jsPDFAPI.addSVG = function(element, x, y, options) {
+        'use strict'
 
-    svgElementToPdf(element, this, options);
-    return this;
-  };
+        options = (typeof(options) == 'undefined' ? {} : options);
+        options.x_offset = x;
+        options.y_offset = y;
+
+        svgElementToPdf(element, this, options);
+        return this;
+    };
 })(jsPDF.API);
