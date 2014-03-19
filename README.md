@@ -12,10 +12,11 @@ It can convert text, lines, rectangles, ellipses and groups of these elements.
     var svg = $('#container > svg').get(0);
 	// you should set the format dynamically, write [width, height] instead of 'a4'
 	var pdf = new jsPDF('p', 'pt', 'a4');
-	svgElementToPdf(svg, pdf, {
+	pdf.addSVG(svg, 20, 40, // 20 = starting x position (x_offset); 40 = starting y position (y_offset)
+	{
 		scale: 72/96, // this is the ratio of px to pt units
 		removeInvalid: true // this removes elements that could not be translated to pdf from the source svg
-	});
+	}); 
 	pdf.output('datauri'); // use output() to get the jsPDF buffer
 
 # Requirements:
