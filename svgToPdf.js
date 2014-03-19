@@ -122,7 +122,7 @@
                             k*parseInt(n.attr('height')),
                             colorMode
                         );
-                removeAttributes(node, pdfSvgAttr.rect);
+                        removeAttributes(node, pdfSvgAttr.rect);
                         break;
                     case 'ellipse':
                         pdf.ellipse(
@@ -132,7 +132,7 @@
                             k*parseInt(n.attr('ry')),
                             colorMode
                         );
-                removeAttributes(node, pdfSvgAttr.ellipse);
+                        removeAttributes(node, pdfSvgAttr.ellipse);
                         break;
                     case 'circle':
                         pdf.circle(
@@ -141,7 +141,7 @@
                             k*parseInt(n.attr('r')),
                             colorMode
                         );
-                removeAttributes(node, pdfSvgAttr.circle);
+                        removeAttributes(node, pdfSvgAttr.circle);
                         break;
                     case 'text':
                         if(node.hasAttribute('font-family')) {
@@ -195,7 +195,7 @@
                             k * y,
                             n.text()
                         );
-                removeAttributes(node, pdfSvgAttr.text);
+                        removeAttributes(node, pdfSvgAttr.text);
                         break;
                     //TODO: image
                     default:
