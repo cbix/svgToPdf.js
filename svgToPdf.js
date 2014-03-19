@@ -41,6 +41,7 @@ var removeAttributes = function(node, attributes) {
         node.removeAttribute(a.name);
     });	
 }
+
 var svgElementToPdf = function(element, pdf, options) {
     // pdf is a jsPDF object
     //console.log("options =", options);
@@ -92,7 +93,7 @@ var svgElementToPdf = function(element, pdf, options) {
             case 'a':
             case 'g':
                 svgElementToPdf(node, pdf, options);
-		removeAttributes(node, pdfSvgAttr.g);
+                removeAttributes(node, pdfSvgAttr.g);
                 break;
             case 'line':
                 pdf.line(
@@ -111,7 +112,7 @@ var svgElementToPdf = function(element, pdf, options) {
                     k*parseInt(n.attr('height')),
                     colorMode
                 );
-		removeAttributes(node, pdfSvgAttr.rect);
+                removeAttributes(node, pdfSvgAttr.rect);
                 break;
             case 'ellipse':
                 pdf.ellipse(
@@ -121,7 +122,7 @@ var svgElementToPdf = function(element, pdf, options) {
                     k*parseInt(n.attr('ry')),
                     colorMode
                 );
-		removeAttributes(node, pdfSvgAttr.ellipse);
+                removeAttributes(node, pdfSvgAttr.ellipse);
                 break;
             case 'circle':
                 pdf.circle(
@@ -130,7 +131,7 @@ var svgElementToPdf = function(element, pdf, options) {
                     k*parseInt(n.attr('r')),
                     colorMode
                 );
-		removeAttributes(node, pdfSvgAttr.circle);
+                removeAttributes(node, pdfSvgAttr.circle);
                 break;
             case 'text':
                 if(node.hasAttribute('font-family')) {
@@ -184,7 +185,7 @@ var svgElementToPdf = function(element, pdf, options) {
                     k * y,
                     n.text()
                 );
-		removeAttributes(node, pdfSvgAttr.text);
+                removeAttributes(node, pdfSvgAttr.text);
                 break;
             //TODO: image
             default:
