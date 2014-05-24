@@ -2,7 +2,7 @@
  * svgToPdf.js
  * 
  * Copyright 2012-2014 Florian Hülsmann <fh@cbix.de>
- * Copyright 2014 Ben Gribaudo <me@bengribaudo.com>
+ * Copyright 2014 Ben Gribaudo <www.bengribaudo.com>
  * 
  * This script is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
