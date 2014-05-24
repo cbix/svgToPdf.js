@@ -28,6 +28,20 @@ var pdfSvgAttr = {
     circle: ['cx', 'cy', 'r', 'stroke', 'fill', 'stroke-width'],
     text: ['x', 'y', 'font-size', 'font-family', 'text-anchor', 'font-weight', 'font-style', 'fill']
 };
+
+var removeAttributes = function(node, attributes) {
+    var toRemove = [];
+    $.each(node.attributes, function(i, a) {
+        if(typeof(a) != 'undefined' && attributes.indexOf(a.name.toLowerCase()) == -1) {
+            toRemove.push(a.name);
+        }
+    });
+
+    $.each(toRemove, function(i, a) {
+        node.removeAttribute(a.name);
+    });	
+}
+
 var svgElementToPdf = function(element, pdf, options) {
     // pdf is a jsPDF object
     //console.log("options =", options);
@@ -79,11 +93,7 @@ var svgElementToPdf = function(element, pdf, options) {
             case 'a':
             case 'g':
                 svgElementToPdf(node, pdf, options);
-                $.each(node.attributes, function(i, a) {
-                    if(typeof(a) != 'undefined' && pdfSvgAttr.g.indexOf(a.name.toLowerCase()) == -1) {
-                        node.removeAttribute(a.name);
-                    }
-                });
+                removeAttributes(node, pdfSvgAttr.g);
                 break;
             case 'line':
                 pdf.line(
@@ -92,11 +102,7 @@ var svgElementToPdf = function(element, pdf, options) {
                     k*parseInt(n.attr('x2')),
                     k*parseInt(n.attr('y2'))
                 );
-                $.each(node.attributes, function(i, a) {
-                    if(typeof(a) != 'undefined' && pdfSvgAttr.line.indexOf(a.name.toLowerCase()) == -1) {
-                        node.removeAttribute(a.name);
-                    }
-                });
+                removeAttributes(node, pdfSvgAttr.line);
                 break;
             case 'rect':
                 pdf.rect(
@@ -106,11 +112,7 @@ var svgElementToPdf = function(element, pdf, options) {
                     k*parseInt(n.attr('height')),
                     colorMode
                 );
-                $.each(node.attributes, function(i, a) {
-                    if(typeof(a) != 'undefined' && pdfSvgAttr.rect.indexOf(a.name.toLowerCase()) == -1) {
-                        node.removeAttribute(a.name);
-                    }
-                });
+                removeAttributes(node, pdfSvgAttr.rect);
                 break;
             case 'ellipse':
                 pdf.ellipse(
@@ -120,11 +122,7 @@ var svgElementToPdf = function(element, pdf, options) {
                     k*parseInt(n.attr('ry')),
                     colorMode
                 );
-                $.each(node.attributes, function(i, a) {
-                    if(typeof(a) != 'undefined' && pdfSvgAttr.ellipse.indexOf(a.name.toLowerCase()) == -1) {
-                        node.removeAttribute(a.name);
-                    }
-                });
+                removeAttributes(node, pdfSvgAttr.ellipse);
                 break;
             case 'circle':
                 pdf.circle(
@@ -133,11 +131,7 @@ var svgElementToPdf = function(element, pdf, options) {
                     k*parseInt(n.attr('r')),
                     colorMode
                 );
-                $.each(node.attributes, function(i, a) {
-                    if(typeof(a) != 'undefined' && pdfSvgAttr.circle.indexOf(a.name.toLowerCase()) == -1) {
-                        node.removeAttribute(a.name);
-                    }
-                });
+                removeAttributes(node, pdfSvgAttr.circle);
                 break;
             case 'text':
                 if(node.hasAttribute('font-family')) {
@@ -191,11 +185,7 @@ var svgElementToPdf = function(element, pdf, options) {
                     k * y,
                     n.text()
                 );
-                $.each(node.attributes, function(i, a) {
-                    if(typeof(a) != 'undefined' && pdfSvgAttr.text.indexOf(a.name.toLowerCase()) == -1) {
-                        node.removeAttribute(a.name);
-                    }
-                });
+                removeAttributes(node, pdfSvgAttr.text);
                 break;
             //TODO: image
             default:
