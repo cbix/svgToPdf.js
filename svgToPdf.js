@@ -1,3 +1,5 @@
+/*globals $, RGBColor, jsPDF*/
+/*jslint eqeq:true, vars:true*/
 /*
  * svgToPdf.js
  * 
@@ -19,6 +21,9 @@
  * 
  */
 
+(function(jsPDFAPI, undef) {
+'use strict';
+
 var pdfSvgAttr = {
     // allowed attributes. all others are removed from the preview.
     g: ['stroke', 'fill', 'stroke-width'],
@@ -32,33 +37,34 @@ var pdfSvgAttr = {
 var removeAttributes = function(node, attributes) {
     var toRemove = [];
     $.each(node.attributes, function(i, a) {
-        if(typeof(a) != 'undefined' && attributes.indexOf(a.name.toLowerCase()) == -1) {
+        if (a != null && attributes.indexOf(a.name.toLowerCase()) == -1) {
             toRemove.push(a.name);
         }
     });
 
     $.each(toRemove, function(i, a) {
         node.removeAttribute(a.name);
-    });	
-}
+    });
+};
 
 var svgElementToPdf = function(element, pdf, options) {
     // pdf is a jsPDF object
     //console.log("options =", options);
-    var remove = (typeof(options.removeInvalid) == 'undefined' ? false : options.removeInvalid);
-    var k = (typeof(options.scale) == 'undefined' ? 1.0 : options.scale);
+    var remove = (options.removeInvalid == undef ? false : options.removeInvalid);
+    var k = (options.scale == undef ? 1.0 : options.scale);
     var colorMode = null;
     $(element).children().each(function(i, node) {
         //console.log("passing: ", node);
         var n = $(node);
-		var hasFillColor = false;
-		var hasStrokeColor = false;
-		if(n.is('g,line,rect,ellipse,circle,text')) {
+        var hasFillColor = false;
+        var hasStrokeColor = false;
+        var fillRGB;
+        if(n.is('g,line,rect,ellipse,circle,text')) {
             var fillColor = n.attr('fill');
-            if(typeof(fillColor) != 'undefined') {
-                var fillRGB = new RGBColor(fillColor);
+            if(fillColor != null) {
+                fillRGB = new RGBColor(fillColor);
                 if(fillRGB.ok) {
-					hasFillColor = true;
+                    hasFillColor = true;
                     colorMode = 'F';
                 } else {
                     colorMode = null;
@@ -67,16 +73,16 @@ var svgElementToPdf = function(element, pdf, options) {
         }
         if(n.is('g,line,rect,ellipse,circle')) {
             if(hasFillColor) {
-				pdf.setFillColor(fillRGB.r, fillRGB.g, fillRGB.b);
-			}
-            if(typeof(n.attr('stroke-width')) != 'undefined') {
-                pdf.setLineWidth(k * parseInt(n.attr('stroke-width')));
+                pdf.setFillColor(fillRGB.r, fillRGB.g, fillRGB.b);
+            }
+            if(n.attr('stroke-width') != null) {
+                pdf.setLineWidth(k * parseInt(n.attr('stroke-width'), 10));
             }
             var strokeColor = n.attr('stroke');
-            if(typeof(strokeColor) != 'undefined') {
+            if(strokeColor != null) {
                 var strokeRGB = new RGBColor(strokeColor);
                 if(strokeRGB.ok) {
-					hasStrokeColor = true;
+                    hasStrokeColor = true;
                     pdf.setDrawColor(strokeRGB.r, strokeRGB.g, strokeRGB.b);
                     if(colorMode == 'F') {
                         colorMode = 'FD';
@@ -87,7 +93,7 @@ var svgElementToPdf = function(element, pdf, options) {
                     colorMode = null;
                 }
             }
-		}
+        }
         switch(n.get(0).tagName.toLowerCase()) {
             case 'svg':
             case 'a':
@@ -97,38 +103,38 @@ var svgElementToPdf = function(element, pdf, options) {
                 break;
             case 'line':
                 pdf.line(
-                    k*parseInt(n.attr('x1')),
-                    k*parseInt(n.attr('y1')),
-                    k*parseInt(n.attr('x2')),
-                    k*parseInt(n.attr('y2'))
+                    k*parseInt(n.attr('x1'), 10),
+                    k*parseInt(n.attr('y1'), 10),
+                    k*parseInt(n.attr('x2'), 10),
+                    k*parseInt(n.attr('y2'), 10)
                 );
                 removeAttributes(node, pdfSvgAttr.line);
                 break;
             case 'rect':
                 pdf.rect(
-                    k*parseInt(n.attr('x')),
-                    k*parseInt(n.attr('y')),
-                    k*parseInt(n.attr('width')),
-                    k*parseInt(n.attr('height')),
+                    k*parseInt(n.attr('x'), 10),
+                    k*parseInt(n.attr('y'), 10),
+                    k*parseInt(n.attr('width'), 10),
+                    k*parseInt(n.attr('height'), 10),
                     colorMode
                 );
                 removeAttributes(node, pdfSvgAttr.rect);
                 break;
             case 'ellipse':
                 pdf.ellipse(
-                    k*parseInt(n.attr('cx')),
-                    k*parseInt(n.attr('cy')),
-                    k*parseInt(n.attr('rx')),
-                    k*parseInt(n.attr('ry')),
+                    k*parseInt(n.attr('cx'), 10),
+                    k*parseInt(n.attr('cy'), 10),
+                    k*parseInt(n.attr('rx'), 10),
+                    k*parseInt(n.attr('ry'), 10),
                     colorMode
                 );
                 removeAttributes(node, pdfSvgAttr.ellipse);
                 break;
             case 'circle':
                 pdf.circle(
-                    k*parseInt(n.attr('cx')),
-                    k*parseInt(n.attr('cy')),
-                    k*parseInt(n.attr('r')),
+                    k*parseInt(n.attr('cx'), 10),
+                    k*parseInt(n.attr('cy'), 10),
+                    k*parseInt(n.attr('r'), 10),
                     colorMode
                 );
                 removeAttributes(node, pdfSvgAttr.circle);
@@ -163,8 +169,8 @@ var svgElementToPdf = function(element, pdf, options) {
                 }
                 pdf.setFontType(fontType);
                 var pdfFontSize = 16;
-				if(node.hasAttribute('font-size')) {
-                    pdfFontSize = parseInt(n.attr('font-size'));
+                if(node.hasAttribute('font-size')) {
+                    pdfFontSize = parseInt(n.attr('font-size'), 10);
                 }
                 var box = node.getBBox();
                 //FIXME: use more accurate positioning!!
@@ -174,12 +180,12 @@ var svgElementToPdf = function(element, pdf, options) {
                         case 'end': xOffset = box.width; break;
                         case 'middle': xOffset = box.width / 2; break;
                         case 'start': break;
-                        case 'default': n.attr('text-anchor', 'start');
+                        case 'default': n.attr('text-anchor', 'start'); break;
                     }
-                    x = parseInt(n.attr('x')) - xOffset;
-                    y = parseInt(n.attr('y'));
+                    x = parseInt(n.attr('x'), 10) - xOffset;
+                    y = parseInt(n.attr('y'), 10);
                 }
-				//console.log("fontSize:", pdfFontSize, "text:", n.text());
+                //console.log("fontSize:", pdfFontSize, "text:", n.text());
                 pdf.setFontSize(pdfFontSize).text(
                     k * x,
                     k * y,
@@ -198,17 +204,13 @@ var svgElementToPdf = function(element, pdf, options) {
     return pdf;
 };
 
-(function(jsPDFAPI) {
-'use strict';
-
     jsPDFAPI.addSVG = function(element, x, y, options) {
-        'use strict'
 
-        options = (typeof(options) == 'undefined' ? {} : options);
+        options = (options === undef ? {} : options);
         options.x_offset = x;
         options.y_offset = y;
 
         svgElementToPdf(element, this, options);
         return this;
     };
-})(jsPDF.API);
+}(jsPDF.API));
