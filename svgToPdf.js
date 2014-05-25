@@ -37,7 +37,7 @@ var pdfSvgAttr = {
 var removeAttributes = function(node, attributes) {
     var toRemove = [];
     $.each(node.attributes, function(i, a) {
-        if (a != undef && attributes.indexOf(a.name.toLowerCase()) == -1) {
+        if (a != null && attributes.indexOf(a.name.toLowerCase()) == -1) {
             toRemove.push(a.name);
         }
     });
@@ -61,7 +61,7 @@ var svgElementToPdf = function(element, pdf, options) {
         var fillRGB;
         if(n.is('g,line,rect,ellipse,circle,text')) {
             var fillColor = n.attr('fill');
-            if(fillColor != undef) {
+            if(fillColor != null) {
                 fillRGB = new RGBColor(fillColor);
                 if(fillRGB.ok) {
                     hasFillColor = true;
@@ -75,11 +75,11 @@ var svgElementToPdf = function(element, pdf, options) {
             if(hasFillColor) {
                 pdf.setFillColor(fillRGB.r, fillRGB.g, fillRGB.b);
             }
-            if(n.attr('stroke-width') != undef) {
+            if(n.attr('stroke-width') != null) {
                 pdf.setLineWidth(k * parseInt(n.attr('stroke-width'), 10));
             }
             var strokeColor = n.attr('stroke');
-            if(strokeColor != undef) {
+            if(strokeColor != null) {
                 var strokeRGB = new RGBColor(strokeColor);
                 if(strokeRGB.ok) {
                     hasStrokeColor = true;
