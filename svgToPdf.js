@@ -21,11 +21,14 @@
 
 var pdfSvgAttr = {
     // allowed attributes. all others are removed from the preview.
-    g: ['stroke', 'fill', 'stroke-width'],
-    line: ['x1', 'y1', 'x2', 'y2', 'stroke', 'stroke-width'],
-    rect: ['x', 'y', 'width', 'height', 'stroke', 'fill', 'stroke-width'],
-    ellipse: ['cx', 'cy', 'rx', 'ry', 'stroke', 'fill', 'stroke-width'],
-    circle: ['cx', 'cy', 'r', 'stroke', 'fill', 'stroke-width'],
+    g: ['stroke', 'fill', 'stroke-width', 'stroke-opacity', 'fill-opacity'],
+    line: ['x1', 'y1', 'x2', 'y2', 'stroke', 'stroke-width', 'stroke-opacity', 'fill-opacity'],
+    rect: ['x', 'y', 'width', 'height', 'stroke', 'fill', 'stroke-width', 'stroke-opacity', 'fill-opacity'],
+    ellipse: ['cx', 'cy', 'rx', 'ry', 'stroke', 'fill', 'stroke-width', 'stroke-opacity', 'fill-opacity'],
+    circle: ['cx', 'cy', 'r', 'stroke', 'fill', 'stroke-width', 'stroke-opacity', 'fill-opacity'],
+    polygon: ['points', 'stroke', 'fill', 'stroke-width', 'stroke-opacity', 'fill-opacity'],
+    // polyline attributes are the same as those of polygon
+    path: ['d', 'stroke', 'fill', 'stroke-width', 'stroke-opacity', 'fill-opacity'],
     text: ['x', 'y', 'font-size', 'font-family', 'text-anchor', 'font-weight', 'font-style', 'fill']
 };
 
@@ -39,55 +42,243 @@ var removeAttributes = function(node, attributes) {
 
     $.each(toRemove, function(i, a) {
         node.removeAttribute(a.name);
-    });	
-}
+    });
+};
+
+
+var numRgx = /[+-]?(?:\d+\.\d*|\d+|\.\d+)(?:[eE]\d+|[eE][+-]\d+|)/g;
+var getLinesOptionsOfPoly = function (node) {
+    var nums = node.getAttribute('points');
+    nums = (nums && nums.match(numRgx)) || [];
+    if (nums && nums.length) {
+        nums = nums.map((n) => Number(n));
+        if (nums.length % 2) {
+            nums.length--;
+        }
+    }
+    if (nums.length < 4) {
+        // console.log('invalid points attribute:', node);
+        return;
+    }
+    var x = nums[0], y = nums[1], lines = [];
+    for (var i = 2; i < nums.length; i += 2) {
+        lines.push([nums[i] - nums[i - 2], nums[i + 1] - nums[i - 1]]);
+    }
+    return { x: x, y: y, lines: lines };
+};
+
+// please add pathseg polyfill to support path elements. https://github.com/progers/pathseg
+var getLinesOptionsOfPath = function (node) {
+    if (!node || node.tagName != 'path') {
+        return [];
+    }
+    if (!node.pathSegList || !node.pathSegList.getItem) {
+        throw new Error('please add pathseg polyfill to support path elements. https://github.com/progers/pathseg');
+        // return [];
+    }
+    var segList = node.pathSegList, n = segList.numberOfItems, opsList = [];
+    var ops = {
+        lines: []
+    };
+    var curr = { x: 0, y: 0 };
+    var reflectControl = { x: 0, y: 0 };
+    var toRelative = function (nums, relativeTo) {
+        var re = [];
+        for (var i = 0; i < nums.length - 1; i += 2) {
+            re[i] = nums[i] - relativeTo.x;
+            re[i + 1] = nums[i + 1] - relativeTo.y;
+        }
+        return re;
+    };
+    var curveQToC = function (nums) {
+        var a = 2 / 3;
+        var re = [
+            nums[0] * a,
+            nums[1] * a,
+            nums[2] + (nums[0] - nums[2]) * a,
+            nums[3] + (nums[1] - nums[3]) * a,
+            nums[2],
+            nums[3]
+        ];
+        return re;
+    };
+    for (var i = 0, letterPrev; i < n; i++) {
+        var seg = segList.getItem(i);
+        var letter = seg.pathSegTypeAsLetter;
+        var x1 = seg.x1, y1 = seg.y1, x2 = seg.x2, y2 = seg.y2, x = seg.x, y = seg.y;
+        var isRelative = letter >= 'a'; // lowercase letter
+        switch (letter) {
+            case 'M':
+            case 'm': {
+                if (ops.lines.length && Object.prototype.hasOwnProperty.call(ops, 'x')) {
+                    opsList.push(ops);
+                }
+                ops = {
+                    lines: [],
+                    x: isRelative ? x + curr.x : x,
+                    y: isRelative ? y + curr.y : y,
+                    closed: false
+                };
+                ops.closed = false;
+                break;
+            }
+            case 'L': {
+                ops.lines.push(toRelative([x, y], curr));
+                break;
+            }
+            case 'l': {
+                ops.lines.push([x, y]);
+                break;
+            }
+            case 'H': {
+                ops.lines.push([x - curr.x, 0]);
+                break;
+            }
+            case 'h': {
+                ops.lines.push([x, 0]);
+                break;
+            }
+            case 'V': {
+                ops.lines.push([0, y - curr.y]);
+                break;
+            }
+            case 'v': {
+                ops.lines.push([0, y]);
+                break;
+            }
+            case 'Q': {
+                ops.lines.push(curveQToC(toRelative([x1, y1, x, y], curr)));
+                reflectControl.x = x - x1;
+                reflectControl.y = y - y1;
+                break;
+            }
+            case 'q': {
+                ops.lines.push(curveQToC([x1, y1, x, y]));
+                reflectControl.x = x - x1;
+                reflectControl.y = y - y1;
+                break;
+            }
+            case 'T': {
+                var p1 = letterPrev && 'QqTt'.includes(letterPrev) ? reflectControl : { x: 0, y: 0 };
+                ops.lines.push(curveQToC([p1.x, p1.y, x - curr.x, y - curr.y]));
+                reflectControl.x = x - curr.x - p1.x;
+                reflectControl.y = y - curr.y - p1.y;
+                break;
+            }
+            case 't': {
+                var p1 = letterPrev && 'QqTt'.includes(letterPrev) ? reflectControl : { x: 0, y: 0 };
+                ops.lines.push([p1.x, p1.y, x, y]);
+                reflectControl.x = x - p1.x;
+                reflectControl.y = y - p1.y;
+                break;
+            }
+            case 'C': {
+                ops.lines.push(toRelative([x1, y1, x2, y2, x, y], curr));
+                break;
+            }
+            case 'c': {
+                ops.lines.push([x1, y1, x2, y2, x, y]);
+                break;
+            }
+            case 'S':
+            case 's': {
+                var p1 = letterPrev && 'CcSs'.includes(letterPrev) ? reflectControl : { x: 0, y: 0 };
+                if (isRelative) {
+                    ops.lines.push([p1.x, p1.y, x2, y2, x, y]);
+                } else {
+                    ops.lines.push([p1.x, p1.y].concat(toRelative([x2, y2, x, y], curr)));
+                }
+                reflectControl.x = x - x2;
+                reflectControl.y = y - y2;
+                break;
+            }
+            case 'A':
+            case 'a': {
+                // Not support command 'A' and 'a' yet. Treat it as straight line instead.
+                if (isRelative) {
+                    ops.lines.push([x, y]);
+                } else {
+                    ops.lines.push(toRelative([x, y], curr));
+                }
+                break;
+            }
+            case 'z':
+            case 'Z': {
+                ops.closed = true;
+                break;
+            }
+            default: {
+                // throw new Error('Unknown path command ' + letter);
+                return opsList;
+            }
+        }
+        if (letter === 'Z' || letter === 'z') {
+            curr.x = ops.x;
+            curr.y = ops.y;
+        } else {
+            if (letter !== 'V' && letter !== 'v') {
+                curr.x = isRelative ? x + curr.x : x;
+            }
+            if (letter !== 'H' && letter !== 'h') {
+                curr.y = isRelative ? y + curr.y : y;
+            }
+        }
+        letterPrev = letter;
+    }
+    if (ops.lines.length && Object.prototype.hasOwnProperty.call(ops, 'x')) {
+        opsList.push(ops);
+    }
+    return opsList;
+};
 
 var svgElementToPdf = function(element, pdf, options) {
     // pdf is a jsPDF object
     //console.log("options =", options);
     var remove = (typeof(options.removeInvalid) == 'undefined' ? false : options.removeInvalid);
     var k = (typeof(options.scale) == 'undefined' ? 1.0 : options.scale);
-    var colorMode = null;
     $(element).children().each(function(i, node) {
         //console.log("passing: ", node);
         var n = $(node);
-		var hasFillColor = false;
-		var hasStrokeColor = false;
-		if(n.is('g,line,rect,ellipse,circle,text')) {
+        var hasFillColor = false;
+        var hasStrokeColor = false;
+        var colorMode = null;
+        if(n.is('g,line,rect,ellipse,circle,polygon,polyline,path,text')) {
             var fillColor = n.attr('fill');
-            if(typeof(fillColor) != 'undefined') {
+            if(typeof(fillColor) != 'undefined' && fillColor != 'none' && n.attr('fill-opacity') !== '0') {
                 var fillRGB = new RGBColor(fillColor);
                 if(fillRGB.ok) {
-					hasFillColor = true;
+                    hasFillColor = true;
                     colorMode = 'F';
                 } else {
                     colorMode = null;
                 }
             }
         }
-        if(n.is('g,line,rect,ellipse,circle')) {
+        if(n.is('g,line,rect,ellipse,circle,polygon,polyline,path')) {
             if(hasFillColor) {
-				pdf.setFillColor(fillRGB.r, fillRGB.g, fillRGB.b);
-			}
-            if(typeof(n.attr('stroke-width')) != 'undefined') {
+                pdf.setFillColor(fillRGB.r, fillRGB.g, fillRGB.b);
+            }
+            var hasStrokeWidth = false;
+            if(typeof(n.attr('stroke-width')) != 'undefined' && n.attr('stroke-width') !== '0' && n.attr('stroke-opacity') !== '0') {
                 pdf.setLineWidth(k * parseInt(n.attr('stroke-width')));
+                hasStrokeWidth = true;
             }
             var strokeColor = n.attr('stroke');
-            if(typeof(strokeColor) != 'undefined') {
+            if(typeof(strokeColor) != 'undefined' && strokeColor != 'none' && hasStrokeWidth) {
                 var strokeRGB = new RGBColor(strokeColor);
                 if(strokeRGB.ok) {
-					hasStrokeColor = true;
+                    hasStrokeColor = true;
                     pdf.setDrawColor(strokeRGB.r, strokeRGB.g, strokeRGB.b);
-                    if(colorMode == 'F') {
+                    if(hasFillColor) {
                         colorMode = 'FD';
                     } else {
-                        colorMode = null;
+                        colorMode = 'S';
                     }
                 } else {
                     colorMode = null;
                 }
             }
-		}
+        }
         switch(n.get(0).tagName.toLowerCase()) {
             case 'svg':
             case 'a':
@@ -133,11 +324,59 @@ var svgElementToPdf = function(element, pdf, options) {
                 );
                 removeAttributes(node, pdfSvgAttr.circle);
                 break;
+            case 'polygon':
+            case 'polyline':
+                var linesOptions = getLinesOptionsOfPoly(node);
+                if (linesOptions) {
+                    pdf.lines(
+                        linesOptions.lines,
+                        k * linesOptions.x,
+                        k * linesOptions.y,
+                        [k, k],
+                        colorMode,
+                        tag === 'polygon' // polygon is closed, polyline is not closed
+                    );
+                }
+                removeAttributes(node, pdfSvgAttr.polygon);
+                break;
+            case 'path':
+                if (colorMode) {
+                    var linesOptionsList = getLinesOptionsOfPath(node);
+                    if (linesOptionsList.length > 0) {
+                        linesOptionsList.forEach(function (linesOptions) {
+                            pdf.lines(
+                                linesOptions.lines,
+                                k * linesOptions.x,
+                                k * linesOptions.y,
+                                [k, k],
+                                null,
+                                linesOptions.closed
+                            );
+                        });
+                        // svg fill rule default is nonzero
+                        var fillRule = n.attr('fill-rule');
+                        if (fillRule === 'evenodd') {
+                            // f* : fill using even-odd rule
+                            // B* : stroke and fill using even-odd rule
+                            if (colorMode === 'F') {
+                                colorMode = 'f*';
+                            } else if (colorMode === 'FD') {
+                                colorMode = 'B*';
+                            }
+                        }
+                        pdf.internal.write(pdf.internal.getStyle(colorMode));
+                    }
+                }
+                removeAttributes(node, pdfSvgAttr.path);
+                break;
             case 'text':
                 if(node.hasAttribute('font-family')) {
                     switch(n.attr('font-family').toLowerCase()) {
                         case 'serif': pdf.setFont('times'); break;
                         case 'monospace': pdf.setFont('courier'); break;
+                        case 'times': pdf.setFont('times'); break;
+                        case 'courier': pdf.setFont('courier'); break;
+                        case 'helvetica': pdf.setFont('helvetica'); break;
                         default:
                             n.attr('font-family', 'sans-serif');
                             pdf.setFont('helvetica');
@@ -163,7 +402,7 @@ var svgElementToPdf = function(element, pdf, options) {
                 }
                 pdf.setFontType(fontType);
                 var pdfFontSize = 16;
-				if(node.hasAttribute('font-size')) {
+                if(node.hasAttribute('font-size')) {
                     pdfFontSize = parseInt(n.attr('font-size'));
                 }
                 var box = node.getBBox();
@@ -179,7 +418,7 @@ var svgElementToPdf = function(element, pdf, options) {
                     x = parseInt(n.attr('x')) - xOffset;
                     y = parseInt(n.attr('y'));
                 }
-				//console.log("fontSize:", pdfFontSize, "text:", n.text());
+                //console.log("fontSize:", pdfFontSize, "text:", n.text());
                 pdf.setFontSize(pdfFontSize).text(
                     k * x,
                     k * y,
@@ -208,6 +447,9 @@ var svgElementToPdf = function(element, pdf, options) {
         options.x_offset = x;
         options.y_offset = y;
 
+        if (typeof element === 'string') {
+            element = new DOMParser().parseFromString(element, 'text/xml').documentElement;
+        }
         svgElementToPdf(element, this, options);
         return this;
     };
