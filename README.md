@@ -21,6 +21,7 @@ It can convert text, lines, rectangles, ellipses and groups of these elements.
 # Requirements:
 * [jsPDF](https://github.com/MrRio/jsPDF)
 * [jQuery](http://jquery.org)
+* [pathseg](https://github.com/progers/pathseg)
 
 # Roadmap:
 * Image elements
